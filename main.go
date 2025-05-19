@@ -10,83 +10,83 @@ import (
 
 func main() {
 
+	botinit := initialization()
+	setCommands(botinit) //設定指令清單
+
+	updateConfig := tgbotapi.NewUpdate(0)           //創建機器人更新配置
+	updateConfig.Timeout = 60                       //設定更新時間
+	updates := botinit.GetUpdatesChan(updateConfig) //將設定的更新配置傳入機器人
+
+	for alluserdate := range updates { //無線迴圈 監控 更新
+
+		eventHandling(botinit, alluserdate) //判斷何種事件
+
+	}
+}
+
+// 初始化
+func initialization() *tgbotapi.BotAPI {
 	txt, err := os.ReadFile("token.txt")
 	if err != nil {
 		log.Fatalf("讀取 token.txt 失敗: %v", err)
 	}
 	token := strings.TrimSpace(string(txt))
-	bot, err := tgbotapi.NewBotAPI(token)
+	botinit, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		log.Fatal(err)
 	}
-	//設定 Command 區域
-	//Commadnd key 使用者前面需要加上 "/"  Description 是使用者看到的指令
+	return botinit
+}
+
+// 設定 /command 指令清單
+func setCommands(botinit *tgbotapi.BotAPI) {
 	commands := []tgbotapi.BotCommand{
 		{Command: "water", Description: "天氣"},
 		{Command: "rain", Description: "下雨"},
 		{Command: "bot", Description: "機器人指令"},
 	}
-	setCmdCfg := tgbotapi.NewSetMyCommands(commands...)
-
-	if _, err := bot.Request(setCmdCfg); err != nil {
+	cmdConfig := tgbotapi.NewSetMyCommands(commands...)
+	if _, err := botinit.Request(cmdConfig); err != nil {
 		log.Fatalf("設定指令失敗: %v", err)
 	}
-
-	updateConfig := tgbotapi.NewUpdate(0) //設定初始化
-	updateConfig.Timeout = 60             //更新時間間隔
-
-	updates := bot.GetUpdatesChan(updateConfig) //對更新的監控
-
-	for alluserdate := range updates { //處理數據
-
-		//按鈕事件
-		//如果不先處理按鈕事件 會導致按鈕事件無法正常運行
-		if alluserdate.CallbackQuery != nil {
-			callback := alluserdate.CallbackQuery
-			var botresp string
-
-			switch callback.Data {
-			case "happy":
-				botresp = "太棒了！希望你天天開心 😄"
-			case "sad":
-				botresp = "別難過，希望明天會更好 🌈"
-			}
-
-			bot.Request(tgbotapi.NewCallback(callback.ID, ""))
-			msg := tgbotapi.NewMessage(callback.Message.Chat.ID, botresp)
-			bot.Send(msg)
-			continue
-		}
-
-		//訊息事件
-		if alluserdate.Message != nil {
-			log.Printf("[%s] %s", alluserdate.Message.From.UserName, alluserdate.Message.Text)
-
-			userchar := alluserdate.Message.Text
-			username := alluserdate.Message.Chat.ID
-
-			if userchar == "/bot" {
-				keyboard := tgbotapi.NewInlineKeyboardMarkup(
-					tgbotapi.NewInlineKeyboardRow(
-						tgbotapi.NewInlineKeyboardButtonData("好開心 😄", "happy"),
-						tgbotapi.NewInlineKeyboardButtonData("不開心 😢", "sad"),
-					),
-				)
-				msg := tgbotapi.NewMessage(username, "你今天心情如何？")
-				msg.ReplyMarkup = keyboard
-				bot.Send(msg)
-				continue
-			}
-
-			msg := response(username, userchar)
-			if _, err := bot.Send(msg); err != nil {
-				log.Println(err)
-			}
-
-		}
+}
+func eventHandling(botinit *tgbotapi.BotAPI, alluserdate tgbotapi.Update) {
+	switch {
+	case alluserdate.CallbackQuery != nil:
+		handleCallback(botinit, alluserdate.CallbackQuery) //處理按鈕事件
+	case alluserdate.Message != nil:
+		handleMessage(botinit, alluserdate.Message) //處理訊息事件
 	}
 }
 
+func handleCallback(botinit *tgbotapi.BotAPI, callback *tgbotapi.CallbackQuery) {
+	// 處理按鈕事件
+	var botresp string
+	switch callback.Data {
+	case "happy":
+		botresp = "太棒了！希望你天天開心 😄"
+	case "sad":
+		botresp = "別難過，希望明天會更好 🌈"
+	}
+	botinit.Request(tgbotapi.NewCallback(callback.ID, ""))
+	msg := tgbotapi.NewMessage(callback.Message.Chat.ID, botresp)
+	botinit.Send(msg)
+}
+
+// 處理訊息事件
+// 這裡可以根據不同的訊息內容來回覆不同的訊息 回答出去的位子
+func handleMessage(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
+	username := msg.Chat.ID
+	userchar := msg.Text
+	log.Printf("[%s] %s", msg.From.UserName, userchar)
+
+	resp := response(username, userchar)
+	if _, err := bot.Send(resp); err != nil {
+		log.Println("傳送訊息錯誤:", err)
+	}
+}
+
+// 這裡可以根據不同的訊息內容來回覆不同的訊息  回應的邏輯地方
 func response(username int64, userchar string) tgbotapi.MessageConfig {
 	var msg tgbotapi.MessageConfig
 	switch userchar {
@@ -96,7 +96,16 @@ func response(username int64, userchar string) tgbotapi.MessageConfig {
 		msg = tgbotapi.NewMessage(username, "今天天氣真好")
 	case "/rain":
 		msg = tgbotapi.NewMessage(username, "今天下雨了")
-	default:
+	case "/bot": // 訊息區的機器人表單按鈕設定
+		keyboard := tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData("好開心 😄", "happy"),
+				tgbotapi.NewInlineKeyboardButtonData("不開心 😢", "sad"),
+			),
+		)
+		msg = tgbotapi.NewMessage(username, "你今天心情如何？")
+		msg.ReplyMarkup = keyboard
+	default: // 用戶端的表單設定
 		msg = tgbotapi.NewMessage(username, "請選擇")
 		msg.ReplyMarkup = tgbotapi.NewReplyKeyboard(
 			tgbotapi.NewKeyboardButtonRow(
