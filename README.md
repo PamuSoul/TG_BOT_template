@@ -10,3 +10,13 @@
 即可做使用
 
 ---
+如需開啟 內連模式
+需至
+
+>@BotFather 
+啟用內聯模式
+打開 Telegram 找到 @BotFather
+輸入指令 
+>/setinline
+選擇你的機器人（Bot）
+根據指示，BotFather 會要求你輸入在用戶輸入 @bot 時的提示內容。
