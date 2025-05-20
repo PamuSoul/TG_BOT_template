@@ -13,21 +13,17 @@
     
 依照提示輸入：
     
-1. Bot 名稱（可見名稱）
+1. Bot 名稱（使用者名稱）
         
-1. Bot 使用者名稱（必須以 `bot` 結尾，如 `MyTestBot`）
+1. Bot （必須以 `bot` 結尾）(@BOT)  標記的名稱
         
 完成後會收到一組 **Token**，這是你的 Bot API 金鑰。
 
 
 # 如需開啟 內連模式
 
-打開 Telegram 找到 @BotFather
+打開 Telegram 找到 `@BotFather`
 
-輸入指令 
-
->/setinline
-
-選擇你的機器人（Bot）
+輸入指令 `/setinline`選擇你的機器人（Bot）
 
 根據指示，BotFather 會要求你輸入在用戶輸入 @bot 時的提示內容。
