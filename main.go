@@ -50,12 +50,16 @@ func setCommands(botinit *tgbotapi.BotAPI) {
 		log.Fatalf("設定指令失敗: %v", err)
 	}
 }
+
+// 判斷事件用的 目前有這幾種事件
 func eventHandling(botinit *tgbotapi.BotAPI, alluserdate tgbotapi.Update) {
 	switch {
 	case alluserdate.CallbackQuery != nil:
 		handleCallback(botinit, alluserdate.CallbackQuery) //處理按鈕事件
 	case alluserdate.Message != nil:
 		handleMessage(botinit, alluserdate.Message) //處理訊息事件
+	case alluserdate.InlineQuery != nil:
+		HandleInlineQuery(botinit, alluserdate.InlineQuery) //處理內聯查詢事件
 	}
 }
 
