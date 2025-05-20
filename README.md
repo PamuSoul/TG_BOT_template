@@ -12,10 +12,11 @@
 ---
 如需開啟 內連模式
 需至
-
 >@BotFather 
 
 啟用內聯模式
+---
+開啟說明
 打開 Telegram 找到 @BotFather
 輸入指令 
 >/setinline
