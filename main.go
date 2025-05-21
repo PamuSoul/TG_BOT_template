@@ -72,7 +72,7 @@ func handleCallback(botinit *tgbotapi.BotAPI, callback *tgbotapi.CallbackQuery) 
 	case "sad":
 		botresp = "別難過，希望明天會更好 🌈"
 	}
-	botinit.Request(tgbotapi.NewCallback(callback.ID, ""))
+	botinit.Request(tgbotapi.NewCallback(callback.ID, "")) // 回應給API按鈕被點擊 如沒這指令會一直轉圈圈
 	msg := tgbotapi.NewMessage(callback.Message.Chat.ID, botresp)
 	botinit.Send(msg)
 }
@@ -111,15 +111,19 @@ func response(username int64, userchar string) tgbotapi.MessageConfig {
 		msg.ReplyMarkup = keyboard
 	default: // 用戶端的表單設定
 		msg = tgbotapi.NewMessage(username, "請選擇")
-		msg.ReplyMarkup = tgbotapi.NewReplyKeyboard(
-			tgbotapi.NewKeyboardButtonRow(
-				tgbotapi.NewKeyboardButton("巴哈姆特"),
-				tgbotapi.NewKeyboardButton("/water"),
-			),
-			tgbotapi.NewKeyboardButtonRow(
-				tgbotapi.NewKeyboardButton("/rain"),
-			),
-		)
+		//鍵盤設定
+		msg.ReplyMarkup = tgbotapi.ReplyKeyboardMarkup{
+			Keyboard: [][]tgbotapi.KeyboardButton{
+				{
+					tgbotapi.NewKeyboardButton("巴哈姆特"),
+					tgbotapi.NewKeyboardButton("water"),
+				},
+				{
+					tgbotapi.NewKeyboardButton("rain"),
+				},
+			},
+			ResizeKeyboard: true,
+		}
 	}
 	return msg
 }
