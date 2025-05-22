@@ -2,15 +2,22 @@ package main
 
 import (
 	"log"
-	"os"
-	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/pelletier/go-toml"
 )
+
+type Config struct {
+	Bot Bot `toml:"bot"`
+}
+
+type Bot struct {
+	Token string `toml:"token"`
+}
 
 func main() {
 
-	botinit := initialization()
+	botinit := inittoml()
 	setCommands(botinit) //設定指令清單
 
 	updateConfig := tgbotapi.NewUpdate(0)           //創建機器人更新配置
@@ -24,6 +31,7 @@ func main() {
 	}
 }
 
+/*
 // 初始化
 func initialization() *tgbotapi.BotAPI {
 	txt, err := os.ReadFile("token.txt")
@@ -32,6 +40,44 @@ func initialization() *tgbotapi.BotAPI {
 	}
 	token := strings.TrimSpace(string(txt))
 	botinit, err := tgbotapi.NewBotAPI(token)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return botinit
+}
+*/
+/*
+func initenv() *tgbotapi.BotAPI {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("無法載入 .env 檔案")
+	}
+	token := os.Getenv("TOKEN")
+	if token == "" {
+		log.Fatal("參數設定錯誤")
+	}
+	botinit, err := tgbotapi.NewBotAPI(token)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return botinit
+}
+*/
+func inittoml() *tgbotapi.BotAPI {
+	tree, err := toml.LoadFile("config.toml")
+	if err != nil {
+		log.Fatalf("讀取 config.toml 失敗: %v", err)
+	}
+
+	// 直接取得 bot.token 字串
+	token := tree.Get("bot.token") // 這裡的 token 是 interface{} 型別
+	if token == nil {
+		log.Fatal("config.toml 裡找不到 bot.token")
+	}
+
+	botToken := token.(string) //我相信 INTERFACE{} 是字串 如不是 程式會報錯
+
+	botinit, err := tgbotapi.NewBotAPI(botToken)
 	if err != nil {
 		log.Fatal(err)
 	}
