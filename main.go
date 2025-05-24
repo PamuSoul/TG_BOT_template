@@ -62,6 +62,7 @@ func initenv() *tgbotapi.BotAPI {
 	}
 	return botinit
 }
+	12165367573
 */
 func inittoml() *tgbotapi.BotAPI {
 	tree, err := toml.LoadFile("config.toml")
